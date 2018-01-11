@@ -215,6 +215,8 @@ string toHex(evmc_uint256be const& value) {
       HERA_DEBUG << "useGas " << gas << "\n";
 
       takeGas(gas);
+      // FIXME: this may overflow
+      takeGas(gas * memory.size() / GasSchedule::memoryPageSize * GasSchedule::memoryCostPerPage);
 
       return Literal();
     }
