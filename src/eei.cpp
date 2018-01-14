@@ -392,8 +392,15 @@ namespace HeraVM {
 
       heraAssert(!(msg.flags & EVM_STATIC), "\"storageStore\" attempted in static mode");
 
-      evm_uint256be path = loadUint256(pathOffset);
-      evm_uint256be value = loadUint256(valueOffset);
+      vector<uint8_t> _path(32);
+      loadMemory(pathOffset, _path, 32);
+      evm_uint256be path;
+      memcpy(path.bytes, _path.data(), 32);
+
+      vector<uint8_t> _value(32);
+      loadMemory(valueOffset, _value, 32);
+      evm_uint256be value;
+      memcpy(value.bytes, _value.data(), 32);
 
       evm_uint256be current;
       context->fn_table->get_storage(&current, context, &msg.destination, &path);
@@ -416,12 +423,16 @@ namespace HeraVM {
 
       HERA_DEBUG << "storageLoad " << hex << pathOffset << " " << resultOffset << dec << "\n";
 
-      evm_uint256be path = loadUint256(pathOffset);
+      vector<uint8_t> _path(32);
+      loadMemory(pathOffset, _path, 32);
+      evm_uint256be path;
+      memcpy(path.bytes, _path.data(), 32);
 
-      evm_uint256be result;
-      context->fn_table->get_storage(&result, context, &msg.destination, &path);
+      evm_uint256be _result;
+      context->fn_table->get_storage(&_result, context, &msg.destination, &path);
 
-      storeUint256(result, resultOffset);
+      vector<uint8_t> result(_result.bytes, _result.bytes + 32);
+      storeMemory(result, 0, resultOffset, 32);
 
       return Literal();
     }
