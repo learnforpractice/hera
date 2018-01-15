@@ -50,6 +50,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
    public:
     Memory() {}
+    char* rawbuffer(unsigned offset, unsigned length) {
+      assert(size() <= (offset + length)); // "memory: requested raw buffer is too short"
+      return &memory[offset];
+    }
     size_t size() const { return memory.size(); }
     void resize(size_t newSize) {
       // Ensure the smallest allocation is large enough that most allocators
