@@ -157,9 +157,8 @@ void execute(
   EthereumInterface interface(context, code, msg, result);
   ModuleInstance instance(module, &interface);
 
-  Name main = Name("main");
-  LiteralList args;
-  instance.callExport(main, args);
+  // Execute main
+  instance.callExport(Name("main"), LiteralList());
 }
 
 }
