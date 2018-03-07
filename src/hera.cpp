@@ -44,6 +44,11 @@ using namespace HeraVM;
 
 struct hera_instance : evm_instance {
   bool fallback = false;
+  /* 
+   * 0 for Binaryen, 
+   * 1 for WAVM JIT compiler
+   */
+  uint8_t vm = 0;
 
   hera_instance() : evm_instance({EVM_ABI_VERSION, nullptr, nullptr, nullptr}) {}
 };
@@ -256,9 +261,17 @@ static int evm_set_option(
   char const* name,
   char const* value
 ) {
+  hera_instance* hera = static_cast<hera_instance*>(instance);
+
   if (strcmp(name, "fallback") == 0) {
-    hera_instance* hera = static_cast<hera_instance*>(instance);
     hera->fallback = strcmp(value, "true") == 0;
+    return 1;
+  }
+  if (strcmp(name, "vm") == 0) {
+    if (strcmp(value, "binaryen") == 0)
+      hera->vm = 0;
+    if (strcmp(value, "wavm") == 0)
+      hera->vm = 1;
     return 1;
   }
   return 0;
