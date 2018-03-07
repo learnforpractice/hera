@@ -12,5 +12,6 @@ add_compile_options(-Wall -Wextra -Wconversion -Wno-sign-conversion -Wno-unknown
 project(hera)
 
 include(ProjectBinaryen)
+include(ProjectWAVM)
 
 add_subdirectory(src)
