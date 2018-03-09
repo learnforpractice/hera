@@ -42,241 +42,249 @@ using namespace std;
 using namespace wasm;
 using namespace HeraVM;
 
-struct hera_instance : evm_instance {
-  bool fallback = false;
+struct hera_instance:evm_instance {
+	bool fallback = false;
 
-  hera_instance() : evm_instance({EVM_ABI_VERSION, nullptr, nullptr, nullptr}) {}
+	 hera_instance():evm_instance( {
+				      EVM_ABI_VERSION, nullptr, nullptr,
+				      nullptr}) {
+	}
 };
 
 namespace {
 
 #if HERA_METERING_CONTRACT
-vector<uint8_t> callSystemContract(
-  evm_context* context,
-  evm_address const& address,
-  int64_t & gas,
-  vector<uint8_t> const& input
-) {
-  evm_message message = {
-    .destination = address,
-    .sender = {},
-    .value = {},
-    .input_data = input.data(),
-    .input_size = input.size(),
-    .code_hash = {},
-    .gas = gas,
-    .depth = 0,
-    .kind = EVM_CALL,
-    .flags = EVM_STATIC
-  };
+	vector < uint8_t > callSystemContract(evm_context * context,
+					      evm_address const &address,
+					      int64_t & gas,
+					      vector < uint8_t > const &input) {
+		evm_message message = {
+			.destination = address,
+			.sender = {},
+			.value = {},
+			.input_data = input.data(),
+			.input_size = input.size(),
+			.code_hash = {},
+			.gas = gas,
+			.depth = 0,
+			.kind = EVM_CALL,
+			.flags = EVM_STATIC
+		};
 
-  evm_result result;
-  context->fn_table->call(&result, context, &message);
+		evm_result result;
+		context->fn_table->call(&result, context, &message);
 
-  vector<uint8_t> ret;
-  if (result.status_code == EVM_SUCCESS && result.output_data)
-    ret.assign(result.output_data, result.output_data + result.output_size);
+		vector < uint8_t > ret;
+		if (result.status_code == EVM_SUCCESS && result.output_data)
+			ret.assign(result.output_data,
+				   result.output_data + result.output_size);
 
-  gas = result.gas_left;
+		gas = result.gas_left;
 
-  if (result.release)
-    result.release(&result);
+		if (result.release)
+			result.release(&result);
 
-  return ret;
-}
+		return ret;
+	}
 #endif
 
-vector<uint8_t> sentinel(evm_context* context, vector<uint8_t> const& input)
-{
+	vector < uint8_t > sentinel(evm_context * context,
+				    vector < uint8_t > const &input) {
 #if HERA_DEBUGGING
-  cerr << "Metering (input " << input.size() << " bytes)..." << endl;
+		cerr << "Metering (input " << input.
+		    size() << " bytes)..." << endl;
 #endif
 
 #if HERA_METERING_CONTRACT
-  int64_t startgas = numeric_limits<int64_t>::max(); // do not charge for metering yet (give unlimited gas)
-  int64_t gas = startgas;
-  vector<uint8_t> ret = callSystemContract(
-    context,
-    { .bytes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xa } }, // precompile address 0x00...0a
-    gas,
-    input
-  );
+		int64_t startgas = numeric_limits < int64_t >::max();	// do not charge for metering yet (give unlimited gas)
+		int64_t gas = startgas;
+		vector < uint8_t > ret = callSystemContract(context, {
+							    .bytes = {
+							    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xa}},	// precompile address 0x00...0a
+							    gas, input);
 
 #if HERA_DEBUGGING
-  cerr << "Metering done (output " << ret.size() << " bytes, used " << (startgas - gas) << " gas)" << endl;
+		cerr << "Metering done (output " << ret.
+		    size() << " bytes, used " << (startgas -
+						  gas) << " gas)" << endl;
 #endif
 
-  return ret;
+		return ret;
 #else
-  (void)context;
-  return input;
+		(void)context;
+		return input;
 #endif
-}
+	}
 
-void execute(
-	evm_context* context,
-	vector<uint8_t> const& code,
-	evm_message const& msg,
-	ExecutionResult & result
-) {
+	void execute(evm_context * context,
+		     vector < uint8_t > const &code,
+		     evm_message const &msg, ExecutionResult & result) {
 #if HERA_DEBUGGING
-  cerr << "Executing..." << endl;
+		cerr << "Executing..." << endl;
 #endif
 
-  Module module;
+		Module module;
 
-  // Load module
-  try {
-    WasmBinaryBuilder parser(module, reinterpret_cast<vector<char> const&>(code), false);
-    parser.read();
-  } catch (ParseException &p) {
-    heraAssert(
-      false,
-      "Error in parsing WASM binary: '" +
-      p.text +
-      "' at " +
-      to_string(p.line) +
-      ":" +
-      to_string(p.col)
-    );
-  }
+		// Load module
+		try {
+			WasmBinaryBuilder parser(module,
+						 reinterpret_cast < vector <
+						 char >const &>(code), false);
+			parser.read();
+		} catch(ParseException & p) {
+			heraAssert(false,
+				   "Error in parsing WASM binary: '" +
+				   p.text +
+				   "' at " +
+				   to_string(p.line) + ":" + to_string(p.col)
+			    );
+		}
 
-  // Print
-  // WasmPrinter::printModule(module);
+		// Print
+		// WasmPrinter::printModule(module);
 
-  // Validate
-  heraAssert(WasmValidator().validate(module), "Module is not valid.");
+		// Validate
+		heraAssert(WasmValidator().validate(module),
+			   "Module is not valid.");
 
-  // This should be caught during deployment time by the Sentinel.
-  // TODO: validate for other conditions too?
-  heraAssert(module.getExportOrNull(Name("main")) != nullptr, "Contract entry point (\"main\") missing.");
+		// This should be caught during deployment time by the Sentinel.
+		// TODO: validate for other conditions too?
+		heraAssert(module.getExportOrNull(Name("main")) != nullptr,
+			   "Contract entry point (\"main\") missing.");
 
-  // NOTE: DO NOT use the optimiser here, it will conflict with metering
+		// NOTE: DO NOT use the optimiser here, it will conflict with metering
 
-  // Interpet
-  EthereumInterface interface(context, code, msg, result);
-  ModuleInstance instance(module, &interface);
+		// Interpet
+		EthereumInterface interface(context, code, msg, result);
+		ModuleInstance instance(module, &interface);
 
-  Name main = Name("main");
-  LiteralList args;
-  instance.callExport(main, args);
-}
+		Name main = Name("main");
+		LiteralList args;
+		instance.callExport(main, args);
+	}
 
 }
 
 extern "C" {
 
-static void evm_destroy_result(evm_result const* result)
-{
-  delete[] result->output_data;
-}
+	static void evm_destroy_result(evm_result const *result) {
+		delete[]result->output_data;
+	} static evm_result evm_execute(evm_instance * instance,
+					evm_context * context,
+					enum evm_revision rev,
+					const evm_message * msg,
+					const uint8_t * code,
+					size_t code_size) {
+		evm_result ret;
+		memset(&ret, 0, sizeof(evm_result));
 
-static evm_result evm_execute(
-  evm_instance* instance,
-  evm_context* context,
-  enum evm_revision rev,
-  const evm_message* msg,
-  const uint8_t* code,
-  size_t code_size)
-{
-  evm_result ret;
-  memset(&ret, 0, sizeof(evm_result));
+		try {
+			heraAssert(msg->gas >= 0, "Negative startgas?");
 
-  try {
-    heraAssert(msg->gas >= 0, "Negative startgas?");
+			ExecutionResult result;
+			result.gasLeft = (uint64_t) msg->gas;
 
-    ExecutionResult result;
-    result.gasLeft = (uint64_t)msg->gas;
+			// ensure we can only handle WebAssembly version 1
+			if (code_size < 5 || code[0] != 0 || code[1] != 'a'
+			    || code[2] != 's' || code[3] != 'm'
+			    || code[4] != 1) {
+				hera_instance *hera =
+				    static_cast < hera_instance * >(instance);
+				ret.status_code =
+				    hera->fallback ? EVM_REJECTED : EVM_FAILURE;
+				return ret;
+			}
 
-    // ensure we can only handle WebAssembly version 1
-    if (code_size < 5 || code[0] != 0 || code[1] != 'a' || code[2] != 's' || code[3] != 'm' || code[4] != 1) {
-      hera_instance* hera = static_cast<hera_instance*>(instance);
-      ret.status_code = hera->fallback ? EVM_REJECTED : EVM_FAILURE;
-      return ret;
-    }
+			heraAssert(rev == EVM_BYZANTIUM,
+				   "Only Byzantium supported.");
 
-    heraAssert(rev == EVM_BYZANTIUM, "Only Byzantium supported.");
+			vector < uint8_t > _code(code, code + code_size);
 
-    vector<uint8_t> _code(code, code + code_size);
+			if (msg->kind == EVM_CREATE) {
+				// Meter the deployment (constructor) code
+				_code = sentinel(context, _code);
+				heraAssert(_code.size() > 5,
+					   "Invalid contract or metering failed.");
+			}
 
-    if (msg->kind == EVM_CREATE) {
-      // Meter the deployment (constructor) code
-      _code = sentinel(context, _code);
-      heraAssert(_code.size() > 5, "Invalid contract or metering failed.");
-    }
+			execute(context, _code, *msg, result);
 
-    execute(context, _code, *msg, result);
+			// copy call result
+			if (result.returnValue.size() > 0) {
+				vector < uint8_t > returnValue;
 
-    // copy call result
-    if (result.returnValue.size() > 0) {
-      vector<uint8_t> returnValue;
+				if (msg->kind == EVM_CREATE && !result.isRevert) {
+					// Meter the deployed code
+					returnValue =
+					    sentinel(context,
+						     result.returnValue);
+					heraAssert(returnValue.size() > 5,
+						   "Invalid contract or metering failed.");
+				} else {
+					returnValue = move(result.returnValue);
+				}
 
-      if (msg->kind == EVM_CREATE && !result.isRevert) {
-        // Meter the deployed code
-        returnValue = sentinel(context, result.returnValue);
-        heraAssert(returnValue.size() > 5, "Invalid contract or metering failed.");
-      } else {
-        returnValue = move(result.returnValue);
-      }
+				uint8_t *output_data =
+				    new uint8_t[returnValue.size()];
+				copy(returnValue.begin(), returnValue.end(),
+				     output_data);
 
-      uint8_t* output_data = new uint8_t[returnValue.size()];
-      copy(returnValue.begin(), returnValue.end(), output_data);
+				ret.output_size = returnValue.size();
+				ret.output_data = output_data;
+				ret.release = evm_destroy_result;
+			}
 
-      ret.output_size = returnValue.size();
-      ret.output_data = output_data;
-      ret.release = evm_destroy_result;
-    }
-
-    ret.status_code = result.isRevert ? EVM_REVERT : EVM_SUCCESS;
-    ret.gas_left = result.gasLeft;
-  } catch (OutOfGasException) {
-    ret.status_code = EVM_OUT_OF_GAS;
-  } catch (InternalErrorException &e) {
-    ret.status_code = EVM_INTERNAL_ERROR;
+			ret.status_code =
+			    result.isRevert ? EVM_REVERT : EVM_SUCCESS;
+			ret.gas_left = result.gasLeft;
+		}
+		catch(OutOfGasException) {
+			ret.status_code = EVM_OUT_OF_GAS;
+		}
+		catch(InternalErrorException & e) {
+			ret.status_code = EVM_INTERNAL_ERROR;
 #if HERA_DEBUGGING
-    cerr << "InternalError: " << e.what() << endl;
+			cerr << "InternalError: " << e.what() << endl;
 #endif
-  } catch (exception &e) {
-    ret.status_code = EVM_INTERNAL_ERROR;
+		}
+		catch(exception & e) {
+			ret.status_code = EVM_INTERNAL_ERROR;
 #if HERA_DEBUGGING
-    cerr << "Unknown exception: " << e.what() << endl;
+			cerr << "Unknown exception: " << e.what() << endl;
 #endif
-  } catch (...) {
-    ret.status_code = EVM_INTERNAL_ERROR;
+		}
+		catch( ...) {
+			ret.status_code = EVM_INTERNAL_ERROR;
 #if HERA_DEBUGGING
-    cerr << "Totally unknown exception" << endl;
+			cerr << "Totally unknown exception" << endl;
 #endif
-  }
+		}
 
-  return ret;
-}
+		return ret;
+	}
 
-static int evm_set_option(
-  evm_instance* instance,
-  char const* name,
-  char const* value
-) {
-  if (strcmp(name, "fallback") == 0) {
-    hera_instance* hera = static_cast<hera_instance*>(instance);
-    hera->fallback = strcmp(value, "true") == 0;
-    return 1;
-  }
-  return 0;
-}
+	static int evm_set_option(evm_instance * instance,
+				  char const *name, char const *value) {
+		if (strcmp(name, "fallback") == 0) {
+			hera_instance *hera =
+			    static_cast < hera_instance * >(instance);
+			hera->fallback = strcmp(value, "true") == 0;
+			return 1;
+		}
+		return 0;
+	}
 
-static void evm_destroy(evm_instance* instance)
-{
-  hera_instance* hera = static_cast<hera_instance*>(instance);
-  delete hera;
-}
+	static void evm_destroy(evm_instance * instance) {
+		hera_instance *hera = static_cast < hera_instance * >(instance);
+		delete hera;
+	}
 
-evm_instance* hera_create()
-{
-  hera_instance* instance = new hera_instance;
-  instance->destroy = evm_destroy;
-  instance->execute = evm_execute;
-  instance->set_option = evm_set_option;
-  return static_cast<evm_instance*>(instance);
-}
+	evm_instance *hera_create() {
+		hera_instance *instance = new hera_instance;
+		instance->destroy = evm_destroy;
+		instance->execute = evm_execute;
+		instance->set_option = evm_set_option;
+		return static_cast < evm_instance * >(instance);
+	}
 
 }

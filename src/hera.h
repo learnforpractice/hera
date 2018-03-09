@@ -29,12 +29,11 @@
 extern "C" {
 #endif
 
-struct evm_instance;
+	struct evm_instance;
 
-struct evm_instance* hera_create(void);
+	struct evm_instance *hera_create(void);
 
 #if __cplusplus
 }
 #endif
-
 #endif

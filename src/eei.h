@@ -34,105 +34,110 @@ using namespace wasm;
 
 namespace HeraVM {
 
-class OutOfGasException : std::exception {
-public:
-  const char* what() const noexcept override { return "Out of gas."; }
-};
+	class OutOfGasException:std::exception {
+ public:
+		const char *what() const noexcept override {
+			return "Out of gas.";
+	}};
 
-class InternalErrorException : std::exception {
-public:
-  explicit InternalErrorException(std::string const& _msg): msg(_msg) {}
-  const char* what() const noexcept override { return const_cast<char*>(msg.c_str()); }
-private:
-  std::string msg;
-};
+	class InternalErrorException:std::exception {
+ public:
+		explicit InternalErrorException(std::
+						string const &_msg):msg(_msg) {
+		} const char *what() const noexcept override {
+			return const_cast < char *>(msg.c_str());
+ } private:
+		 std::string msg;
+	};
 
 #define heraAssert(condition, msg) { \
   if (!(condition)) throw InternalErrorException(msg); \
 }
 
-struct ExecutionResult {
-  uint64_t gasLeft = 0;
-  std::vector<uint8_t> returnValue;
-  bool isRevert = false;
-};
+	struct ExecutionResult {
+		uint64_t gasLeft = 0;
+		 std::vector < uint8_t > returnValue;
+		bool isRevert = false;
+	};
 
-struct EthereumInterface : ShellExternalInterface {
-  EthereumInterface(
-    evm_context* _context,
-    std::vector<uint8_t> const& _code,
-    evm_message const& _msg,
-    ExecutionResult & _result
-  ):
-    ShellExternalInterface(),
-    context(_context),
-    code(_code),
-    msg(_msg),
-    result(_result)
-  { }
-
-  Literal callImport(Import *import, LiteralList& arguments) override;
+	struct EthereumInterface:ShellExternalInterface {
+		EthereumInterface(evm_context * _context,
+				  std::vector < uint8_t > const &_code,
+				  evm_message const &_msg,
+				  ExecutionResult &
+				  _result):ShellExternalInterface(),
+		    context(_context), code(_code), msg(_msg), result(_result) {
+		} Literal callImport(Import * import,
+				     LiteralList & arguments) override;
 #if HERA_DEBUGGING
-  Literal callDebugImport(Import *import, LiteralList& arguments);
+		Literal callDebugImport(Import * import,
+					LiteralList & arguments);
 #endif
 
-  void trap(const char* why) override {
-    throw InternalErrorException(std::string("Trap condition: ") + why);
-  }
+		void trap(const char *why) override {
+			throw InternalErrorException(std::
+						     string("Trap condition: ")
+						     + why);
+		}
 
-private:
-  void takeGas(uint64_t gas);
+ private:
+		void takeGas(uint64_t gas);
 
-  void loadMemory(uint32_t srcOffset, uint8_t *dst, size_t length);
-  void loadMemory(uint32_t srcOffset, std::vector<uint8_t> & dst, size_t length);
-  void storeMemory(const uint8_t *src, uint32_t dstOffset, uint32_t length);
-  void storeMemory(std::vector<uint8_t> const& src, uint32_t srcOffset, uint32_t dstOffset, uint32_t length);
+		void loadMemory(uint32_t srcOffset, uint8_t * dst,
+				size_t length);
+		void loadMemory(uint32_t srcOffset,
+				std::vector < uint8_t > &dst, size_t length);
+		void storeMemory(const uint8_t * src, uint32_t dstOffset,
+				 uint32_t length);
+		void storeMemory(std::vector < uint8_t > const &src,
+				 uint32_t srcOffset, uint32_t dstOffset,
+				 uint32_t length);
 
-  evm_uint256be loadUint256(uint32_t srcOffset);
-  void storeUint256(evm_uint256be const& src, uint32_t dstOffset);
-  evm_address loadUint160(uint32_t srcOffset);
-  void storeUint160(evm_address const& src, uint32_t dstOffset);
-  evm_uint256be loadUint128(uint32_t srcOffset);
-  void storeUint128(evm_uint256be const& src, uint32_t dstOffset);
+		evm_uint256be loadUint256(uint32_t srcOffset);
+		void storeUint256(evm_uint256be const &src, uint32_t dstOffset);
+		evm_address loadUint160(uint32_t srcOffset);
+		void storeUint160(evm_address const &src, uint32_t dstOffset);
+		evm_uint256be loadUint128(uint32_t srcOffset);
+		void storeUint128(evm_uint256be const &src, uint32_t dstOffset);
 
-  void ensureSenderBalance(evm_uint256be const& value);
+		void ensureSenderBalance(evm_uint256be const &value);
 
-  static uint64_t safeLoadUint64(evm_uint256be const& value);
+		static uint64_t safeLoadUint64(evm_uint256be const &value);
 
-  /* Checks if host supplied 256 bit value exceeds UINT64_MAX */
-  static bool exceedsUint64(evm_uint256be const& value);
+		/* Checks if host supplied 256 bit value exceeds UINT64_MAX */
+		static bool exceedsUint64(evm_uint256be const &value);
 
-  /* Checks if host supplied 256 bit value exceeds UINT128_MAX */
-  static bool exceedsUint128(evm_uint256be const& value);
+		/* Checks if host supplied 256 bit value exceeds UINT128_MAX */
+		static bool exceedsUint128(evm_uint256be const &value);
 
-  /* Checks if 256 bit value is all zeroes */
-  static bool isZeroUint256(evm_uint256be const& value);
+		/* Checks if 256 bit value is all zeroes */
+		static bool isZeroUint256(evm_uint256be const &value);
 
-  evm_context* context = nullptr;
-  std::vector<uint8_t> const& code;
-  evm_message const& msg;
-  std::vector<uint8_t> lastReturnData;
-  ExecutionResult & result;
-};
+		evm_context *context = nullptr;
+		std::vector < uint8_t > const &code;
+		evm_message const &msg;
+		std::vector < uint8_t > lastReturnData;
+		ExecutionResult & result;
+	};
 
-struct GasSchedule {
-  static constexpr unsigned storageLoad = 200;
-  static constexpr unsigned storageStoreCreate = 20000;
-  static constexpr unsigned storageStoreChange = 5000;
-  static constexpr unsigned log = 375;
-  static constexpr unsigned logData = 8;
-  static constexpr unsigned logTopic = 375;
-  static constexpr unsigned create = 32000;
-  static constexpr unsigned call = 700;
-  static constexpr unsigned copy = 3;
-  static constexpr unsigned blockhash = 800;
-  static constexpr unsigned balance = 400;
-  static constexpr unsigned base = 2;
-  static constexpr unsigned verylow = 3;
-  static constexpr unsigned extcode = 700;
-  static constexpr unsigned selfdestruct = 5000;
-  static constexpr unsigned valuetransfer = 9000;
-  static constexpr unsigned callNewAccount = 25000;
-};
+	struct GasSchedule {
+		static constexpr unsigned storageLoad = 200;
+		static constexpr unsigned storageStoreCreate = 20000;
+		static constexpr unsigned storageStoreChange = 5000;
+		static constexpr unsigned log = 375;
+		static constexpr unsigned logData = 8;
+		static constexpr unsigned logTopic = 375;
+		static constexpr unsigned create = 32000;
+		static constexpr unsigned call = 700;
+		static constexpr unsigned copy = 3;
+		static constexpr unsigned blockhash = 800;
+		static constexpr unsigned balance = 400;
+		static constexpr unsigned base = 2;
+		static constexpr unsigned verylow = 3;
+		static constexpr unsigned extcode = 700;
+		static constexpr unsigned selfdestruct = 5000;
+		static constexpr unsigned valuetransfer = 9000;
+		static constexpr unsigned callNewAccount = 25000;
+	};
 
 }
