@@ -83,10 +83,8 @@ namespace HeraDebugging {
 
   DebugStream hera_debug;
 
-  std::ostream& HeraDebug() {
-    return hera_debug.getStream(); 
-  }
 }
+#define HeraDebug() hera_debug.getStream()
 #endif
 
 #if __cplusplus
