@@ -44,6 +44,9 @@
 using namespace std;
 using namespace wasm;
 using namespace HeraVM;
+#if HERA_DEBUGGING
+using namespace HeraDebugging;
+#endif
 
 struct hera_instance : evm_instance {
   bool fallback = false;

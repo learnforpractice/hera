@@ -24,10 +24,12 @@
 
 #include <stdexcept>
 #include "eei.h"
-#include "hera.h"
 
 using namespace std;
 using namespace wasm;
+#if HERA_DEBUGGING
+using namespace HeraDebugging;
+#endif
 
 namespace HeraVM {
 
