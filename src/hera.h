@@ -52,7 +52,9 @@ struct evm_instance* hera_create(void);
  * At runtime this can be disabled according to evm_options
  */
 #if HERA_DEBUGGING
-std::ostream& hera_debug(std::cerr);
+namespace HeraVM {
+  std::ostream& hera_debug(std::cerr);
+}
 #endif
 
 #if __cplusplus
