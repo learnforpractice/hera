@@ -46,7 +46,7 @@ string toHex(evm_uint256be const& value) {
     (void)globals;
     (void)wasm;
 #if HERA_DEBUGGING
-    hera_debug << "importGlobals\n";
+    HeraDebug() << "importGlobals\n";
 #endif
   }
 
@@ -57,7 +57,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("print32")) {
       uint32_t value = arguments[0].geti32();
 
-      hera_debug << "DEBUG print32: " << value << " " << hex << "0x" << value << dec << endl;
+      HeraDebug() << "DEBUG print32: " << value << " " << hex << "0x" << value << dec << endl;
 
       return Literal();
     }
@@ -65,7 +65,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("print64")) {
       uint64_t value = arguments[0].geti64();
 
-      hera_debug << "DEBUG print64: " << value << " " << hex << "0x" << value << dec << endl;
+      HeraDebug() << "DEBUG print64: " << value << " " << hex << "0x" << value << dec << endl;
 
       return Literal();
     }
@@ -79,22 +79,22 @@ string toHex(evm_uint256be const& value) {
 
       bool useHex = import->base == Name("printMemHex");
 
-      hera_debug << "DEBUG printMem" << (useHex ? "Hex(" : "(") << hex << "0x" << offset << ":0x" << length << "): " << dec;
+      HeraDebug() << "DEBUG printMem" << (useHex ? "Hex(" : "(") << hex << "0x" << offset << ":0x" << length << "): " << dec;
       if (useHex)
       {
-        hera_debug << hex;
+        HeraDebug() << hex;
         for (uint32_t i = offset; i < (offset + length); i++) {
-          hera_debug << static_cast<int>(memory.get<uint8_t>(i)) << " ";
+          HeraDebug() << static_cast<int>(memory.get<uint8_t>(i)) << " ";
         }
-        hera_debug << dec;
+        HeraDebug() << dec;
       }
       else
       {
         for (uint32_t i = offset; i < (offset + length); i++) {
-          hera_debug << memory.get<uint8_t>(i) << " ";
+          HeraDebug() << memory.get<uint8_t>(i) << " ";
         }
       }
-      hera_debug << endl;
+      HeraDebug() << endl;
 
       return Literal();
     }
@@ -106,30 +106,30 @@ string toHex(evm_uint256be const& value) {
 
       bool useHex = import->base == Name("printStorageHex");
 
-      hera_debug << "DEBUG printStorage" << (useHex ? "Hex" : "") << "(0x" << hex;
+      HeraDebug() << "DEBUG printStorage" << (useHex ? "Hex" : "") << "(0x" << hex;
 
       // Print out the path
       for (uint8_t b: path.bytes)
-        hera_debug << static_cast<int>(b);
+        HeraDebug() << static_cast<int>(b);
 
-      hera_debug << "): " << dec;
+      HeraDebug() << "): " << dec;
 
       evm_uint256be result;
       context->fn_table->get_storage(&result, context, &msg.destination, &path);
 
       if (useHex)
       {
-        hera_debug << hex;
+        HeraDebug() << hex;
         for (uint8_t b: result.bytes)
-          hera_debug << static_cast<int>(b) << " ";
-        hera_debug << dec;
+          HeraDebug() << static_cast<int>(b) << " ";
+        HeraDebug() << dec;
       }
       else
       {
         for (uint8_t b: result.bytes)
-          hera_debug << b << " ";
+          HeraDebug() << b << " ";
       }
-      hera_debug << endl;
+      HeraDebug() << endl;
 
       return Literal();
     }
@@ -140,7 +140,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t cost = static_cast<uint32_t>(arguments[2].geti32());
       int32_t sp = arguments[3].geti32();
 
-      hera_debug << "evmTrace\n";
+      HeraDebug() << "evmTrace\n";
 
       static constexpr int stackItemSize = sizeof(evm_uint256be);
       heraAssert(sp <= (1024 * stackItemSize), "EVM stack pointer out of bounds.");
@@ -179,7 +179,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("useGas")) {
       uint64_t gas = arguments[0].geti64();
 #if HERA_DEBUGGING
-      hera_debug << "useGas " << gas << "\n";
+      HeraDebug() << "useGas " << gas << "\n";
 #endif
       takeGas(gas);
 
@@ -188,7 +188,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getGasLeft")) {
 #if HERA_DEBUGGING
-      hera_debug << "getGasLeft\n";
+      HeraDebug() << "getGasLeft\n";
 #endif
       static_assert(is_same<decltype(result.gasLeft), uint64_t>::value, "uint64_t type expected");
 
@@ -200,7 +200,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getAddress")) {
       uint32_t resultOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getAddress " << hex << resultOffset << dec << "\n";
+      HeraDebug() << "getAddress " << hex << resultOffset << dec << "\n";
 #endif
       storeUint160(msg.destination, resultOffset);
 
@@ -213,7 +213,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t addressOffset = arguments[0].geti32();
       uint32_t resultOffset = arguments[1].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getBalance " << hex << addressOffset << " " << resultOffset << dec << "\n";
+      HeraDebug() << "getBalance " << hex << addressOffset << " " << resultOffset << dec << "\n";
 #endif
       evm_address address = loadUint160(addressOffset);
       evm_uint256be result;
@@ -229,7 +229,7 @@ string toHex(evm_uint256be const& value) {
       int64_t number = arguments[0].geti64();
       uint32_t resultOffset = arguments[1].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getBlockHash " << hex << number << " " << resultOffset << dec << "\n";
+      HeraDebug() << "getBlockHash " << hex << number << " " << resultOffset << dec << "\n";
 #endif
       evm_uint256be blockhash;
 
@@ -242,7 +242,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getCallDataSize")) {
 #if HERA_DEBUGGING
-      hera_debug << "callDataSize\n";
+      HeraDebug() << "callDataSize\n";
 #endif
       takeGas(GasSchedule::base);
 
@@ -254,7 +254,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t dataOffset = arguments[1].geti32();
       uint32_t length = arguments[2].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "callDataCopy " << hex << resultOffset << " " << dataOffset << " " << length << dec << "\n";
+      HeraDebug() << "callDataCopy " << hex << resultOffset << " " << dataOffset << " " << length << dec << "\n";
 #endif
       heraAssert(ffs(GasSchedule::copy) + (ffs(length) - 5) <= 64, "Gas charge overflow");
       heraAssert(
@@ -272,7 +272,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getCaller")) {
       uint32_t resultOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getCaller " << hex << resultOffset << dec << "\n";
+      HeraDebug() << "getCaller " << hex << resultOffset << dec << "\n";
 #endif
       takeGas(GasSchedule::base);
       storeUint160(msg.sender, resultOffset);
@@ -283,7 +283,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getCallValue")) {
       uint32_t resultOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getCallValue " << hex << resultOffset << dec << "\n";
+      HeraDebug() << "getCallValue " << hex << resultOffset << dec << "\n";
 #endif
       takeGas(GasSchedule::base);
       storeUint128(msg.value, resultOffset);
@@ -296,7 +296,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t codeOffset = arguments[1].geti32();
       uint32_t length = arguments[2].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "codeCopy " << hex << resultOffset << " " << codeOffset << " " << length << dec << "\n";
+      HeraDebug() << "codeCopy " << hex << resultOffset << " " << codeOffset << " " << length << dec << "\n";
 #endif
       heraAssert(ffs(GasSchedule::copy) + (ffs(length) - 5) <= 64, "Gas charge overflow");
       heraAssert(
@@ -311,7 +311,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getCodeSize")) {
 #if HERA_DEBUGGING
-      hera_debug << "getCodeSize\n";
+      HeraDebug() << "getCodeSize\n";
 #endif
       takeGas(GasSchedule::base);
 
@@ -324,7 +324,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t codeOffset = arguments[2].geti32();
       uint32_t length = arguments[3].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "externalCodeCopy " << hex << addressOffset << " " << resultOffset << " " << codeOffset << " " << length << dec << "\n";
+      HeraDebug() << "externalCodeCopy " << hex << addressOffset << " " << resultOffset << " " << codeOffset << " " << length << dec << "\n";
 #endif
       evm_address address = loadUint160(addressOffset);
       const uint8_t *code;
@@ -343,7 +343,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getExternalCodeSize")) {
       uint32_t addressOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getExternalCodeSize " << hex << addressOffset << dec << "\n";
+      HeraDebug() << "getExternalCodeSize " << hex << addressOffset << dec << "\n";
 #endif
       evm_address address = loadUint160(addressOffset);
       takeGas(GasSchedule::extcode);
@@ -355,7 +355,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getBlockCoinbase")) {
       uint32_t resultOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getBlockCoinbase " << hex << resultOffset << dec << "\n";
+      HeraDebug() << "getBlockCoinbase " << hex << resultOffset << dec << "\n";
 #endif
       evm_tx_context tx_context;
 
@@ -369,7 +369,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getBlockDifficulty")) {
       uint32_t offset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getBlockDifficulty " << hex << offset << dec << "\n";
+      HeraDebug() << "getBlockDifficulty " << hex << offset << dec << "\n";
 #endif
       evm_tx_context tx_context;
 
@@ -382,7 +382,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getBlockGasLimit")) {
 #if HERA_DEBUGGING
-      hera_debug << "getBlockGasLimit\n";
+      HeraDebug() << "getBlockGasLimit\n";
 #endif
       evm_tx_context tx_context;
 
@@ -397,7 +397,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getTxGasPrice")) {
       uint32_t valueOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getTxGasPrice " << hex << valueOffset << dec << "\n";
+      HeraDebug() << "getTxGasPrice " << hex << valueOffset << dec << "\n";
 #endif
       evm_tx_context tx_context;
 
@@ -413,7 +413,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t length = arguments[1].geti32();
       uint32_t numberOfTopics = arguments[2].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "log " << hex << dataOffset << " " << length << " " << numberOfTopics << dec << "\n";
+      HeraDebug() << "log " << hex << dataOffset << " " << length << " " << numberOfTopics << dec << "\n";
 #endif
       heraAssert(!(msg.flags & EVM_STATIC), "\"log\" attempted in static mode");
       heraAssert(numberOfTopics <= 4, "Too many topics specified");
@@ -440,7 +440,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getBlockNumber")) {
 #if HERA_DEBUGGING
-      hera_debug << "getBlockNumber\n";
+      HeraDebug() << "getBlockNumber\n";
 #endif
       evm_tx_context tx_context;
 
@@ -454,7 +454,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getBlockTimestamp")) {
 #if HERA_DEBUGGING
-      hera_debug << "getBlockTimestamp\n";
+      HeraDebug() << "getBlockTimestamp\n";
 #endif
       evm_tx_context tx_context;
 
@@ -469,7 +469,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("getTxOrigin")) {
       uint32_t resultOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "getTxOrigin " << hex << resultOffset << dec << "\n";
+      HeraDebug() << "getTxOrigin " << hex << resultOffset << dec << "\n";
 #endif
       evm_tx_context tx_context;
 
@@ -484,7 +484,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t pathOffset = arguments[0].geti32();
       uint32_t valueOffset = arguments[1].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "storageStore " << hex << pathOffset << " " << valueOffset << dec << "\n";
+      HeraDebug() << "storageStore " << hex << pathOffset << " " << valueOffset << dec << "\n";
 #endif
       heraAssert(!(msg.flags & EVM_STATIC), "\"storageStore\" attempted in static mode");
 
@@ -510,7 +510,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t pathOffset = arguments[0].geti32();
       uint32_t resultOffset = arguments[1].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "storageLoad " << hex << pathOffset << " " << resultOffset << dec << "\n";
+      HeraDebug() << "storageLoad " << hex << pathOffset << " " << resultOffset << dec << "\n";
 #endif
       evm_uint256be path = loadUint256(pathOffset);
       evm_uint256be result;
@@ -527,7 +527,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t offset = arguments[0].geti32();
       uint32_t size = arguments[1].geti32();
 #if HERA_DEBUGGING
-      hera_debug << (import->base == Name("revert") ? "revert " : "return ") << hex << offset << " " << size << dec << "\n";
+      HeraDebug() << (import->base == Name("revert") ? "revert " : "return ") << hex << offset << " " << size << dec << "\n";
 #endif
       result.returnValue = vector<uint8_t>(size);
       loadMemory(offset, result.returnValue, size);
@@ -539,7 +539,7 @@ string toHex(evm_uint256be const& value) {
 
     if (import->base == Name("getReturnDataSize")) {
 #if HERA_DEBUGGING
-      hera_debug << "getReturnDataSize\n";
+      HeraDebug() << "getReturnDataSize\n";
 #endif
       takeGas(GasSchedule::base);
 
@@ -551,7 +551,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t offset = arguments[1].geti32();
       uint32_t size = arguments[2].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "returnDataCopy " << hex << dataOffset << " " << offset << " " << size << dec << "\n";
+      HeraDebug() << "returnDataCopy " << hex << dataOffset << " " << offset << " " << size << dec << "\n";
 #endif
       takeGas(GasSchedule::verylow);
       storeMemory(lastReturnData, offset, dataOffset, size);
@@ -610,7 +610,7 @@ string toHex(evm_uint256be const& value) {
         }
       }
 #if HERA_DEBUGGING
-      hera_debug <<
+      HeraDebug() <<
         import->base << " " << hex <<
         gas << " " <<
         addressOffset << " " <<
@@ -666,7 +666,7 @@ string toHex(evm_uint256be const& value) {
       uint32_t length = arguments[2].geti32();
       uint32_t resultOffset = arguments[3].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "create " << hex << valueOffset << " " << dataOffset << " " << length << dec << " " << resultOffset << dec << "\n";
+      HeraDebug() << "create " << hex << valueOffset << " " << dataOffset << " " << length << dec << " " << resultOffset << dec << "\n";
 #endif
       heraAssert(!(msg.flags & EVM_STATIC), "\"create\" attempted in static mode");
 
@@ -725,7 +725,7 @@ string toHex(evm_uint256be const& value) {
     if (import->base == Name("selfDestruct")) {
       uint32_t addressOffset = arguments[0].geti32();
 #if HERA_DEBUGGING
-      hera_debug << "selfDestruct " << hex << addressOffset << dec << "\n";
+      HeraDebug() << "selfDestruct " << hex << addressOffset << dec << "\n";
 #endif
       heraAssert(!(msg.flags & EVM_STATIC), "\"selfDestruct\" attempted in static mode");
 
@@ -746,7 +746,7 @@ string toHex(evm_uint256be const& value) {
   {
     if (gas > result.gasLeft) {
 #if HERA_DEBUGGING
-      hera_debug << "Out of gas :(\n";
+      HeraDebug() << "Out of gas :(\n";
 #endif
       throw OutOfGasException();
     }
@@ -763,7 +763,7 @@ string toHex(evm_uint256be const& value) {
     heraAssert((srcOffset + length) > srcOffset, "Out of bounds (source) memory copy.");
 #if HERA_DEBUGGING 
     if (!length)
-      hera_debug << "Zero-length memory load from offset 0x" << hex << srcOffset << dec << "\n";
+      HeraDebug() << "Zero-length memory load from offset 0x" << hex << srcOffset << dec << "\n";
 #endif
     for (uint32_t i = 0; i < length; ++i) {
       dst[length - (i + 1)] = memory.get<uint8_t>(srcOffset + i);
@@ -776,7 +776,7 @@ string toHex(evm_uint256be const& value) {
     heraAssert(dst.size() >= length, "Out of bounds (destination) memory copy.");
 #if HERA_DEBUGGING
     if (!length)
-      hera_debug << "Zero-length memory load from offset 0x" << hex << srcOffset << dec <<"\n";
+      HeraDebug() << "Zero-length memory load from offset 0x" << hex << srcOffset << dec <<"\n";
 #endif
     for (uint32_t i = 0; i < length; ++i) {
       dst[i] = memory.get<uint8_t>(srcOffset + i);
@@ -789,7 +789,7 @@ string toHex(evm_uint256be const& value) {
     heraAssert(memory.size() >= (dstOffset + length), "Out of bounds (destination) memory copy.");
 #if HERA_DEBUGGING
     if (!length)
-      hera_debug << "Zero-length memory store to offset 0x" << hex << dstOffset << dec << "\n";
+      HeraDebug() << "Zero-length memory store to offset 0x" << hex << dstOffset << dec << "\n";
 #endif
     for (uint32_t i = 0; i < length; ++i) {
       memory.set<uint8_t>(dstOffset + length - (i + 1), src[i]);
@@ -804,7 +804,7 @@ string toHex(evm_uint256be const& value) {
     heraAssert(memory.size() >= (dstOffset + length), "Out of bounds (destination) memory copy.");
 #if HERA_DEBUGGING
     if (!length)
-      hera_debug << "Zero-length memory store to offset 0x" << hex << dstOffset << dec << "\n";
+      HeraDebug() << "Zero-length memory store to offset 0x" << hex << dstOffset << dec << "\n";
 #endif
     for (uint32_t i = 0; i < length; i++) {
       memory.set<uint8_t>(dstOffset + i, src[srcOffset + i]);
