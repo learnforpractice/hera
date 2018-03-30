@@ -24,6 +24,7 @@
 
 #include <stdexcept>
 #include "eei.h"
+#include "hera.h"
 
 using namespace std;
 using namespace wasm;
