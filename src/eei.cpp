@@ -385,12 +385,7 @@ string toHex(evmc_uint256be const& value) {
       takeGas(GasSchedule::extcode + GasSchedule::copy * ((uint64_t(length) + 31) / 32));
 
       evmc_address address = loadUint160(addressOffset);
-      // FIXME: optimise this so not vector needs to be created
-      vector<uint8_t> codeBuffer(length);
-      size_t numCopied = context->fn_table->copy_code(context, &address, codeOffset, codeBuffer.data(), codeBuffer.size());
-      fill_n(&codeBuffer[numCopied], length - numCopied, 0);
-
-      storeMemory(codeBuffer, codeOffset, resultOffset, length);
+      heraAssert(context->fn_table->copy_code(context, &address, codeOffset, reinterpret_cast<uint8_t*>(memory.rawbuffer(resultOffset, length)), length) == length, "copy_code failed");
 
       return Literal();
     }
