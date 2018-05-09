@@ -49,6 +49,33 @@ namespace HeraVM {
 
 namespace {
 
+void print(const evmc_message& message) {
+  cout << "gas: " << unsigned(message.gas) << endl;
+  cout << "call depth: " << unsigned(message.depth) << endl;
+  cout << "flags: " << unsigned(message.flags) << endl;
+
+  cout << "sender: ";
+  for (auto b: message.sender.bytes)
+    cout << hex << setw(2) << setfill('0') << unsigned(b);
+  cout << endl;
+
+  cout << "destination: ";
+  for (auto b: message.destination.bytes)
+    cout << hex << setw(2) << setfill('0') << unsigned(b);
+  cout << endl;
+
+  cout << "value: ";
+  for (auto b: message.value.bytes)
+    cout << setw(2) << setfill('0') << unsigned(b);
+  cout << endl;
+
+  cout << "input data: ";
+  for (unsigned int i = 0; i < message.input_size; i++) {
+    cout << setw(2) << setfill('0') << unsigned(message.input_data[i]);
+  }
+  cout << endl;
+}
+
 #if HERA_DEBUGGING
 string toHex(evmc_uint256be const& value) {
   ostringstream os;
@@ -654,6 +681,8 @@ string toHex(evmc_uint256be const& value) {
         takeGas(GasSchedule::valuetransfer);
       takeGas(call_message.gas);
       takeGas(GasSchedule::call);
+
+      print(call_message);
       context->fn_table->call(&call_result, context, &call_message);
 
       if (call_result.output_data) {
@@ -667,6 +696,8 @@ string toHex(evmc_uint256be const& value) {
 
       /* Return unspent gas */
       result.gasLeft += call_result.gas_left;
+
+      std::cout << "call result: " << call_result.status_code << std::endl;
 
       switch (call_result.status_code) {
       case EVMC_SUCCESS:
@@ -883,6 +914,8 @@ string toHex(evmc_uint256be const& value) {
 
   uint64_t EthereumInterface::safeLoadUint128(evmc_uint256be const& value)
   {
+    std::cout << hex << toHex(value);
+
     heraAssert(!exceedsUint128(value), "Value exceeds 128 bits.");
     uint64_t ret = 0;
     for (unsigned i = 16; i < 32; i++) {
