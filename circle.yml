@@ -124,7 +124,7 @@ defaults:
     run:
       name: "Fetch eWASM tests"
       command: |
-        git clone https://github.com/ewasm/tests -b wasm-tests --single-branch --depth 1
+        git clone https://github.com/ewasm/tests -b no-debug --single-branch --depth 1
 
   test: &test
     run:
