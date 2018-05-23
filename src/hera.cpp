@@ -218,6 +218,7 @@ vector<uint8_t> evm2wasm(evmc_context* context, vector<uint8_t> const& input) {
 void execute(
   evmc_context* context,
   vector<uint8_t> const& code,
+  vector<uint8_t> const& state_code,
   evmc_message const& msg,
   ExecutionResult & result,
   bool meterInterfaceGas
@@ -266,7 +267,7 @@ void execute(
   // NOTE: DO NOT use the optimiser here, it will conflict with metering
 
   // Interpet
-  EthereumInterface interface(context, code, msg, result, meterInterfaceGas);
+  EthereumInterface interface(context, state_code, msg, result, meterInterfaceGas);
   ModuleInstance instance(module, &interface);
 
   Name main = Name("main");
@@ -332,7 +333,7 @@ evmc_result hera_execute(
       ensureCondition(_code.size() > 5, ContractValidationFailure, "Invalid contract or metering failed.");
     }
 
-    execute(context, _code, *msg, result, meterInterfaceGas);
+    execute(context, _code, vector<uint8_t>(code, code + code_size), *msg, result, meterInterfaceGas);
 
     // copy call result
     if (result.returnValue.size() > 0) {
