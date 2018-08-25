@@ -19,7 +19,7 @@ endif()
 target_include_directories(hera
     PUBLIC $<BUILD_INTERFACE:${hera_include_dir}>$<INSTALL_INTERFACE:include>
     PRIVATE ${evmc_include_dir})
-target_link_libraries(hera PRIVATE hera-buildinfo evmc::evmc evmc::instructions libevm2wasm binaryen::binaryen Threads::Threads)
+target_link_libraries(hera PRIVATE hera-buildinfo evmc::evmc evmc::instructions libevm2wasm binaryen Threads::Threads)
 if(NOT WIN32)
   if(CMAKE_COMPILER_IS_GNUCXX)
     set_target_properties(hera PROPERTIES LINK_FLAGS "-Wl,--no-undefined")
@@ -38,8 +38,9 @@ if(HERA_WAVM)
     target_link_libraries(hera PRIVATE wavm::wavm)
 endif()
 
-install(TARGETS hera EXPORT heraTargets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+
+#install(TARGETS hera EXPORT heraTargets
+#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#)

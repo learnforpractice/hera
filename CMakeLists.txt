@@ -30,7 +30,7 @@ cable_configure_compiler()
 # TODO: fix the warnings instead
 add_compile_options(-Wno-pedantic)
 
-include(ProjectBinaryen)
+#include(ProjectBinaryen)
 
 cable_add_buildinfo_library(PROJECT_NAME hera)
 
